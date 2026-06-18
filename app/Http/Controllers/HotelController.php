@@ -42,37 +42,51 @@ class HotelController extends Controller
     public function transactionStore(Request $request)
     {
         $request->validate([
-            'linens' => 'required|array',
-            'linens.*.linen_id' => 'required|exists:linens,linen_id',
-            'linens.*.qty' => 'required|integer|min:1',
+            'rooms'                     => 'required|array|min:1',
+            'rooms.*.no_room'           => 'required|string|max:20',
+            'rooms.*.linens'            => 'required|array',
+            'rooms.*.linens.*.linen_id' => 'required|exists:linens,linen_id',
+            'rooms.*.linens.*.qty'      => 'required|integer|min:0',
         ]);
+
+        // Pastikan minimal ada 1 item qty > 0 di seluruh room
+        $totalQtyAll = 0;
+        foreach ($request->rooms as $room) {
+            foreach ($room['linens'] as $linen) {
+                $totalQtyAll += (int) $linen['qty'];
+            }
+        }
+
+        if ($totalQtyAll === 0) {
+            return back()->with('error', 'Harap isi minimal satu item linen dengan jumlah lebih dari 0.');
+        }
 
         DB::beginTransaction();
         try {
-            // Hitung total qty
-            $totalQty = array_sum(array_column($request->linens, 'qty'));
-
-            // Buat transaksi dengan timestamp saat ini (KUNCI ALGORITMA FCFS)
             $transaction = Transaction::create([
-                'user_id' => Auth::id(),
-                'tgl_transaksi' => now(), // Timestamp penting untuk FCFS
-                'status' => 'Pending',
-                'total_qty' => $totalQty,
+                'user_id'       => Auth::id(),
+                'tgl_transaksi' => now(),
+                'status'        => 'Pending',
+                'total_qty'     => $totalQtyAll,
             ]);
 
-            // Simpan detail transaksi
-            foreach ($request->linens as $linen) {
-                if ($linen['qty'] > 0) {
-                    TransactionDetail::create([
-                        'transaction_id' => $transaction->transaction_id,
-                        'linen_id' => $linen['linen_id'],
-                        'qty' => $linen['qty'],
-                    ]);
+            foreach ($request->rooms as $room) {
+                $noRoom = trim($room['no_room']);
+                foreach ($room['linens'] as $linen) {
+                    $qty = (int) $linen['qty'];
+                    if ($qty > 0) {
+                        TransactionDetail::create([
+                            'transaction_id' => $transaction->transaction_id,
+                            'linen_id'       => $linen['linen_id'],
+                            'no_room'        => $noRoom,
+                            'qty'            => $qty,
+                        ]);
+                    }
                 }
             }
 
             DB::commit();
-            return redirect()->route('hotel.transactions.index')->with('success', 'Transaksi berhasil disimpan');
+            return redirect()->route('hotel.transactions.index')->with('success', 'Transaksi berhasil disimpan.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -85,6 +99,14 @@ class HotelController extends Controller
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 
-        return view('hotel.transactions.show', compact('transaction'));
+        // Kelompokkan detail berdasarkan no_room & hitung total per room
+        $roomGroups = $transaction->details->groupBy('no_room')->map(function ($items) {
+            return [
+                'details'   => $items,
+                'total_qty' => $items->sum('qty'),
+            ];
+        });
+
+        return view('hotel.transactions.show', compact('transaction', 'roomGroups'));
     }
 }

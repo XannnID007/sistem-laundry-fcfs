@@ -13,6 +13,7 @@ class TransactionDetail extends Model
     protected $fillable = [
         'transaction_id',
         'linen_id',
+        'no_room',
         'qty',
     ];
 

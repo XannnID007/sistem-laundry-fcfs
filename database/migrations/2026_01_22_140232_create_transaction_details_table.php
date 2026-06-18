@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id('detail_id');
             $table->unsignedBigInteger('transaction_id');
             $table->unsignedBigInteger('linen_id');
+            $table->string('no_room', 10);
             $table->integer('qty');
             $table->timestamps();
 
