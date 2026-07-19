@@ -18,9 +18,6 @@
 
             <ul class="nav nav-secondary mt-2">
 
-                {{-- ============================================ --}}
-                {{-- MENU KHUSUS MANAJER --}}
-                {{-- ============================================ --}}
                 @if (Auth::user()->role == 'Manajer')
                     <li class="nav-item {{ Request::is('manajer/dashboard') ? 'active' : '' }}">
                         <a href="{{ route('manajer.dashboard') }}">
@@ -30,9 +27,7 @@
                     </li>
 
                     <li class="nav-section">
-                        <span class="sidebar-mini-icon">
-                            <i class="fa fa-ellipsis-h"></i>
-                        </span>
+                        <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
                         <h4 class="text-section">Management</h4>
                     </li>
 
@@ -42,14 +37,12 @@
                             <p>Kelola User</p>
                         </a>
                     </li>
-
                     <li class="nav-item {{ Request::is('manajer/hotels*') ? 'active' : '' }}">
                         <a href="{{ route('manajer.hotels.index') }}">
                             <i class="fas fa-building"></i>
                             <p>Kelola Hotel</p>
                         </a>
                     </li>
-
                     <li class="nav-item {{ Request::is('manajer/linens*') ? 'active' : '' }}">
                         <a href="{{ route('manajer.linens.index') }}">
                             <i class="fas fa-tshirt"></i>
@@ -58,22 +51,15 @@
                     </li>
 
                     <li class="nav-section">
-                        <span class="sidebar-mini-icon">
-                            <i class="fa fa-ellipsis-h"></i>
-                        </span>
+                        <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
                         <h4 class="text-section">Laporan</h4>
                     </li>
-
                     <li class="nav-item {{ Request::is('manajer/laporan*') ? 'active' : '' }}">
                         <a href="{{ route('manajer.laporan.index') }}">
                             <i class="fas fa-file-alt"></i>
                             <p>Cetak Laporan</p>
                         </a>
                     </li>
-
-                    {{-- ============================================ --}}
-                    {{-- MENU KHUSUS PIHAK LAUNDRY --}}
-                    {{-- ============================================ --}}
                 @elseif(Auth::user()->role == 'Laundry')
                     <li class="nav-item {{ Request::is('laundry/dashboard') ? 'active' : '' }}">
                         <a href="{{ route('laundry.dashboard') }}">
@@ -83,19 +69,15 @@
                     </li>
 
                     <li class="nav-section">
-                        <span class="sidebar-mini-icon">
-                            <i class="fa fa-ellipsis-h"></i>
-                        </span>
+                        <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
                         <h4 class="text-section">Operasional</h4>
                     </li>
-
                     <li class="nav-item {{ Request::is('laundry/queue*') ? 'active' : '' }}">
                         <a href="{{ route('laundry.queue.index') }}">
                             <i class="fas fa-clipboard-list"></i>
                             <p>Antrean Cucian</p>
                         </a>
                     </li>
-
                     <li class="nav-item {{ Request::is('laundry/transactions*') ? 'active' : '' }}">
                         <a href="{{ route('laundry.transactions.index') }}">
                             <i class="fas fa-history"></i>
@@ -103,9 +85,16 @@
                         </a>
                     </li>
 
-                    {{-- ============================================ --}}
-                    {{-- MENU KHUSUS PIHAK HOTEL --}}
-                    {{-- ============================================ --}}
+                    <li class="nav-section">
+                        <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
+                        <h4 class="text-section">Laporan</h4>
+                    </li>
+                    <li class="nav-item {{ Request::is('laundry/laporan*') ? 'active' : '' }}">
+                        <a href="{{ route('laundry.laporan.index') }}">
+                            <i class="fas fa-print"></i>
+                            <p>Laporan Operasional</p>
+                        </a>
+                    </li>
                 @elseif(Auth::user()->role == 'Hotel')
                     <li class="nav-item {{ Request::is('hotel/dashboard') ? 'active' : '' }}">
                         <a href="{{ route('hotel.dashboard') }}">
@@ -115,19 +104,15 @@
                     </li>
 
                     <li class="nav-section">
-                        <span class="sidebar-mini-icon">
-                            <i class="fa fa-ellipsis-h"></i>
-                        </span>
+                        <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
                         <h4 class="text-section">Transaksi</h4>
                     </li>
-
                     <li class="nav-item {{ Request::is('hotel/transactions/create') ? 'active' : '' }}">
                         <a href="{{ route('hotel.transactions.create') }}">
                             <i class="fas fa-plus-circle"></i>
                             <p>Kirim Cucian Baru</p>
                         </a>
                     </li>
-
                     <li
                         class="nav-item {{ Request::is('hotel/transactions') && !Request::is('hotel/transactions/create') ? 'active' : '' }}">
                         <a href="{{ route('hotel.transactions.index') }}">
@@ -135,7 +120,19 @@
                             <p>Status Cucian</p>
                         </a>
                     </li>
+
+                    <li class="nav-section">
+                        <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
+                        <h4 class="text-section">Laporan</h4>
+                    </li>
+                    <li class="nav-item {{ Request::is('hotel/laporan*') ? 'active' : '' }}">
+                        <a href="{{ route('hotel.laporan.index') }}">
+                            <i class="fas fa-print"></i>
+                            <p>Laporan Transaksi</p>
+                        </a>
+                    </li>
                 @endif
+
             </ul>
         </div>
     </div>

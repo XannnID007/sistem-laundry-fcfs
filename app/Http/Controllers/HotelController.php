@@ -8,6 +8,7 @@ use App\Models\TransactionDetail;
 use App\Models\Linen;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class HotelController extends Controller
 {
@@ -49,7 +50,6 @@ class HotelController extends Controller
             'rooms.*.linens.*.qty'      => 'required|integer|min:0',
         ]);
 
-        // Pastikan minimal ada 1 item qty > 0 di seluruh room
         $totalQtyAll = 0;
         foreach ($request->rooms as $room) {
             foreach ($room['linens'] as $linen) {
@@ -99,7 +99,6 @@ class HotelController extends Controller
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 
-        // Kelompokkan detail berdasarkan no_room & hitung total per room
         $roomGroups = $transaction->details->groupBy('no_room')->map(function ($items) {
             return [
                 'details'   => $items,
@@ -108,5 +107,48 @@ class HotelController extends Controller
         });
 
         return view('hotel.transactions.show', compact('transaction', 'roomGroups'));
+    }
+
+    // ─── Laporan Hotel (khusus transaksi hotel sendiri) ───────────────────────
+
+    public function laporanIndex()
+    {
+        return view('hotel.laporan.index');
+    }
+
+    public function laporanGenerate(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $transactions = Transaction::with(['details.linen', 'user.hotel'])
+            ->where('user_id', Auth::id())
+            ->whereDate('tgl_transaksi', '>=', $request->start_date)
+            ->whereDate('tgl_transaksi', '<=', $request->end_date)
+            ->fcfsOrder()
+            ->get();
+
+        $hotelName = Auth::user()->hotel->nama_hotel ?? 'Hotel';
+
+        return view('hotel.laporan.result', compact('transactions', 'request', 'hotelName'));
+    }
+
+    public function laporanPdf(Request $request)
+    {
+        $transactions = Transaction::with(['details.linen', 'user.hotel'])
+            ->where('user_id', Auth::id())
+            ->whereDate('tgl_transaksi', '>=', $request->start_date)
+            ->whereDate('tgl_transaksi', '<=', $request->end_date)
+            ->fcfsOrder()
+            ->get();
+
+        $hotelName = Auth::user()->hotel->nama_hotel ?? 'Hotel';
+
+        $pdf = Pdf::loadView('hotel.laporan.pdf', compact('transactions', 'request', 'hotelName'));
+        $pdf->setPaper('A4', 'landscape');
+
+        return $pdf->download('laporan-' . str_replace(' ', '-', strtolower($hotelName)) . '-' . date('Y-m-d') . '.pdf');
     }
 }

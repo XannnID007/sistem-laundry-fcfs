@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Laporan Transaksi Laundry')
+@section('title', 'Laporan Operasional Laundry')
 
 @push('styles')
     <style>
@@ -263,6 +263,16 @@
             color: #94a3b8;
             font-size: 0.9rem;
         }
+
+        .filter-badge {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+        }
     </style>
 @endpush
 
@@ -270,28 +280,29 @@
     <div class="page-inner">
 
         <div class="page-header">
-            <h4 class="page-title fw-bold">Laporan Transaksi</h4>
+            <h4 class="page-title fw-bold">Laporan Operasional</h4>
             <ul class="breadcrumbs">
-                <li class="nav-home"><a href="{{ route('manajer.dashboard') }}"><i class="flaticon-home"></i></a></li>
+                <li class="nav-home"><a href="{{ route('laundry.dashboard') }}"><i class="flaticon-home"></i></a></li>
                 <li class="separator"><i class="flaticon-right-arrow"></i></li>
-                <li class="nav-item"><a href="{{ route('manajer.laporan.index') }}">Laporan</a></li>
+                <li class="nav-item"><a href="{{ route('laundry.laporan.index') }}">Laporan</a></li>
                 <li class="separator"><i class="flaticon-right-arrow"></i></li>
                 <li class="nav-item"><a href="#">Hasil</a></li>
             </ul>
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap" style="gap:10px;">
-            <a href="{{ route('manajer.laporan.index') }}" class="btn btn-light btn-round border shadow-sm px-3">
+            <a href="{{ route('laundry.laporan.index') }}" class="btn btn-light btn-round border shadow-sm px-3">
                 <i class="fas fa-arrow-left mr-2"></i> Kembali
             </a>
             @if (!$transactions->isEmpty())
-                <a href="{{ route('manajer.laporan.pdf', ['start_date' => $request->start_date, 'end_date' => $request->end_date]) }}"
+                <a href="{{ route('laundry.laporan.pdf', array_merge(['start_date' => $request->start_date, 'end_date' => $request->end_date], $request->filled('status') ? ['status' => $request->status] : [])) }}"
                     class="btn btn-dark btn-round shadow-sm px-4" target="_blank">
                     <i class="fas fa-file-pdf mr-2"></i> Unduh PDF
                 </a>
             @endif
         </div>
 
+        {{-- Report info --}}
         <div class="report-info-card mb-4">
             <div class="row">
                 <div class="col-sm-4 mb-3 mb-sm-0">
@@ -303,8 +314,14 @@
                     </div>
                 </div>
                 <div class="col-sm-4 mb-3 mb-sm-0">
-                    <div class="label">Cakupan Laporan</div>
-                    <div class="value">Seluruh Hotel Mitra</div>
+                    <div class="label">Filter Status</div>
+                    <div class="value">
+                        @if ($request->filled('status') && $request->status !== 'all')
+                            <span class="filter-badge">{{ $request->status }}</span>
+                        @else
+                            Semua Status
+                        @endif
+                    </div>
                 </div>
                 <div class="col-sm-4">
                     <div class="label">Metode Antrean</div>
@@ -320,7 +337,7 @@
                     <i class="fas fa-folder-open"></i>
                     <h5>Tidak Ada Transaksi</h5>
                     <p>Tidak ada transaksi pada periode yang dipilih.</p>
-                    <a href="{{ route('manajer.laporan.index') }}" class="btn btn-primary btn-round mt-3 px-4">Pilih Periode
+                    <a href="{{ route('laundry.laporan.index') }}" class="btn btn-primary btn-round mt-3 px-4">Pilih Periode
                         Lain</a>
                 </div>
             </div>
@@ -329,7 +346,7 @@
                 $totalKamar = $transactions->sum(fn($t) => $t->details->pluck('no_room')->unique()->count());
                 $totalItem = $transactions->sum('total_qty');
                 $totalSelesai = $transactions->whereIn('status', ['Selesai', 'Diantar'])->count();
-                $totalHotel = $transactions->pluck('user.hotel.nama_hotel')->unique()->count();
+                $totalHotelAkt = $transactions->pluck('user.hotel.nama_hotel')->unique()->count();
             @endphp
 
             <div class="stat-row">
@@ -344,7 +361,7 @@
                     <div class="icon-wrap" style="background:#fce7f3;"><i class="fas fa-hotel" style="color:#9d174d;"></i>
                     </div>
                     <div>
-                        <div class="stat-num">{{ $totalHotel }}</div>
+                        <div class="stat-num">{{ $totalHotelAkt }}</div>
                         <div class="stat-lbl">Hotel Aktif</div>
                     </div>
                 </div>
@@ -378,7 +395,7 @@
             <div class="report-table-card">
                 <div class="card-top">
                     <div>
-                        <h5 class="mb-0 fw-bold text-dark" style="font-size:0.95rem;">Rincian Seluruh Transaksi</h5>
+                        <h5 class="mb-0 fw-bold text-dark" style="font-size:0.95rem;">Rincian Transaksi — Semua Hotel</h5>
                         <small class="text-muted">Diurutkan: waktu masuk (FCFS) · {{ $transactions->count() }} transaksi
                             ditemukan</small>
                     </div>
@@ -494,7 +511,8 @@
                                 <td colspan="4" class="text-right"><i class="fas fa-sigma mr-2"></i> Grand Total
                                     Periode</td>
                                 <td class="text-center">{{ $totalKamar }} kamar</td>
-                                <td class="text-center">{{ $transactions->count() }} transaksi</td>
+                                <td class="text-center">{{ $transactions->count() }} transaksi · {{ $totalHotelAkt }}
+                                    hotel</td>
                                 <td class="text-center" style="font-size:1.1rem;">{{ $totalItem }} <small
                                         style="font-size:0.75rem;opacity:0.7;">pcs</small></td>
                                 <td class="text-center">{{ $totalSelesai }}/{{ $transactions->count() }} selesai</td>

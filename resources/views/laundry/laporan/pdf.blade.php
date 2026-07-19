@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Laporan Transaksi Laundry</title>
+    <title>Laporan Operasional Laundry</title>
     <style>
         * {
             margin: 0;
@@ -174,37 +174,6 @@
             padding: 7px !important;
         }
 
-        .sign-area {
-            display: table;
-            width: 100%;
-            margin-top: 40px;
-        }
-
-        .sign-cell {
-            display: table-cell;
-            text-align: center;
-            width: 33%;
-            padding: 0 10px;
-        }
-
-        .sign-title {
-            font-size: 10px;
-            margin-bottom: 50px;
-        }
-
-        .sign-line {
-            border-top: 1px solid #000;
-            font-size: 10px;
-            font-weight: bold;
-            padding-top: 5px;
-        }
-
-        .sign-sub {
-            font-size: 9px;
-            color: #666;
-            margin-top: 2px;
-        }
-
         .footer {
             margin-top: 20px;
             padding-top: 10px;
@@ -237,11 +206,14 @@
 <body>
 
     <div class="header">
-        <h1>Laporan Transaksi Laundry</h1>
+        <h1>Laporan Operasional Laundry</h1>
         <h2>RedDoorz Laundry Management System</h2>
         <p>Periode: {{ date('d F Y', strtotime($request->start_date)) }} s/d
             {{ date('d F Y', strtotime($request->end_date)) }}</p>
-        <p>Dicetak oleh: {{ Auth::user()->username }} &nbsp;|&nbsp; {{ date('d F Y, H:i') }}</p>
+        @if ($request->filled('status') && $request->status !== 'all')
+            <p>Filter Status: {{ $request->status }}</p>
+        @endif
+        <p>Dicetak: {{ date('d F Y, H:i') }} &nbsp;|&nbsp; Sistem Antrean: FCFS</p>
     </div>
 
     @if ($transactions->isEmpty())
@@ -342,24 +314,6 @@
                 </tr>
             </tfoot>
         </table>
-
-        <div class="sign-area">
-            <div class="sign-cell">
-                <div class="sign-title">Mengetahui</div>
-                <div class="sign-line">( _________________________ )</div>
-                <div class="sign-sub">Tanggal: _________________</div>
-            </div>
-            <div class="sign-cell">
-                <div class="sign-title">Dibuat oleh</div>
-                <div class="sign-line">( {{ Auth::user()->username }} )</div>
-                <div class="sign-sub">Tanggal: {{ date('d F Y') }}</div>
-            </div>
-            <div class="sign-cell">
-                <div class="sign-title">Diperiksa oleh</div>
-                <div class="sign-line">( _________________________ )</div>
-                <div class="sign-sub">Tanggal: _________________</div>
-            </div>
-        </div>
     @endif
 
     <div class="footer">

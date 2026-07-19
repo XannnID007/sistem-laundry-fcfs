@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Laporan Transaksi Laundry</title>
+    <title>Laporan Transaksi - {{ $hotelName }}</title>
     <style>
         * {
             margin: 0;
@@ -18,6 +18,7 @@
             padding: 30px;
         }
 
+        /* Header */
         .header {
             text-align: center;
             margin-bottom: 20px;
@@ -33,8 +34,8 @@
         }
 
         .header h2 {
-            font-size: 11px;
-            font-weight: normal;
+            font-size: 12px;
+            font-weight: bold;
             margin-bottom: 8px;
         }
 
@@ -43,6 +44,7 @@
             margin: 2px 0;
         }
 
+        /* Info */
         .info-table {
             width: 100%;
             border-collapse: collapse;
@@ -66,6 +68,7 @@
             font-weight: bold;
         }
 
+        /* Data table */
         table.data {
             width: 100%;
             border-collapse: collapse;
@@ -95,6 +98,7 @@
             padding: 6px 7px;
         }
 
+        /* Room detail per baris */
         .room {
             border-bottom: 1px dashed #ccc;
         }
@@ -159,6 +163,7 @@
             background: #fafafa;
         }
 
+        /* Total kolom */
         .col-total {
             background: #e8e8e8;
             text-align: center;
@@ -167,6 +172,7 @@
             font-size: 12px;
         }
 
+        /* Footer baris total */
         .row-total td {
             background: #ccc !important;
             font-weight: bold !important;
@@ -174,37 +180,7 @@
             padding: 7px !important;
         }
 
-        .sign-area {
-            display: table;
-            width: 100%;
-            margin-top: 40px;
-        }
-
-        .sign-cell {
-            display: table-cell;
-            text-align: center;
-            width: 33%;
-            padding: 0 10px;
-        }
-
-        .sign-title {
-            font-size: 10px;
-            margin-bottom: 50px;
-        }
-
-        .sign-line {
-            border-top: 1px solid #000;
-            font-size: 10px;
-            font-weight: bold;
-            padding-top: 5px;
-        }
-
-        .sign-sub {
-            font-size: 9px;
-            color: #666;
-            margin-top: 2px;
-        }
-
+        /* Footer halaman */
         .footer {
             margin-top: 20px;
             padding-top: 10px;
@@ -237,11 +213,11 @@
 <body>
 
     <div class="header">
-        <h1>Laporan Transaksi Laundry</h1>
-        <h2>RedDoorz Laundry Management System</h2>
+        <h1>Laporan Transaksi Cucian Linen</h1>
+        <h2>{{ $hotelName }}</h2>
         <p>Periode: {{ date('d F Y', strtotime($request->start_date)) }} s/d
             {{ date('d F Y', strtotime($request->end_date)) }}</p>
-        <p>Dicetak oleh: {{ Auth::user()->username }} &nbsp;|&nbsp; {{ date('d F Y, H:i') }}</p>
+        <p>Dicetak: {{ date('d F Y, H:i') }} &nbsp;|&nbsp; Sistem Antrean: FCFS</p>
     </div>
 
     @if ($transactions->isEmpty())
@@ -251,7 +227,6 @@
             $tKamar = $transactions->sum(fn($t) => $t->details->pluck('no_room')->unique()->count());
             $tItem = $transactions->sum('total_qty');
             $tSelesai = $transactions->whereIn('status', ['Selesai', 'Diantar'])->count();
-            $tHotel = $transactions->pluck('user.hotel.nama_hotel')->unique()->count();
         @endphp
 
         <table class="info-table">
@@ -259,9 +234,9 @@
                 <td class="k">Total Transaksi</td>
                 <td class="s">:</td>
                 <td class="v">{{ $transactions->count() }} transaksi</td>
-                <td class="k" style="padding-left:20px;">Hotel Aktif</td>
+                <td class="k" style="padding-left:20px;">Total Kamar</td>
                 <td class="s">:</td>
-                <td class="v">{{ $tHotel }} hotel</td>
+                <td class="v">{{ $tKamar }} kamar</td>
             </tr>
             <tr>
                 <td class="k">Total Item Linen</td>
@@ -278,12 +253,11 @@
                 <tr>
                     <th style="width:4%;">No</th>
                     <th style="width:8%;">ID</th>
-                    <th style="width:16%;">Hotel</th>
-                    <th style="width:13%;">Waktu Masuk</th>
-                    <th style="width:5%;">Kamar</th>
-                    <th style="width:36%;">Rincian Linen per Kamar</th>
-                    <th style="width:9%;">Total</th>
-                    <th style="width:9%;">Status</th>
+                    <th style="width:14%;">Waktu Masuk</th>
+                    <th style="width:6%;">Kamar</th>
+                    <th style="width:44%;">Rincian Linen per Kamar</th>
+                    <th style="width:10%;">Total</th>
+                    <th style="width:10%;">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -295,9 +269,6 @@
                         </td>
                         <td>
                             <div class="c">#{{ $trx->transaction_id }}</div>
-                        </td>
-                        <td>
-                            <div class="c">{{ $trx->user->hotel->nama_hotel }}</div>
                         </td>
                         <td>
                             <div class="c">
@@ -334,7 +305,7 @@
             </tbody>
             <tfoot>
                 <tr class="row-total">
-                    <td colspan="4" class="tr">Total Keseluruhan</td>
+                    <td colspan="3" class="tr">Total Keseluruhan</td>
                     <td class="tc">{{ $tKamar }} kamar</td>
                     <td class="tc">{{ $transactions->count() }} transaksi</td>
                     <td class="tc">{{ $tItem }} pcs</td>
@@ -342,28 +313,10 @@
                 </tr>
             </tfoot>
         </table>
-
-        <div class="sign-area">
-            <div class="sign-cell">
-                <div class="sign-title">Mengetahui</div>
-                <div class="sign-line">( _________________________ )</div>
-                <div class="sign-sub">Tanggal: _________________</div>
-            </div>
-            <div class="sign-cell">
-                <div class="sign-title">Dibuat oleh</div>
-                <div class="sign-line">( {{ Auth::user()->username }} )</div>
-                <div class="sign-sub">Tanggal: {{ date('d F Y') }}</div>
-            </div>
-            <div class="sign-cell">
-                <div class="sign-title">Diperiksa oleh</div>
-                <div class="sign-line">( _________________________ )</div>
-                <div class="sign-sub">Tanggal: _________________</div>
-            </div>
-        </div>
     @endif
 
     <div class="footer">
-        <div class="footer-l">* Laporan seluruh hotel mitra — sistem FCFS RedDoorz Laundry.</div>
+        <div class="footer-l">* Laporan transaksi milik {{ $hotelName }} — sistem FCFS RedDoorz Laundry.</div>
         <div class="footer-r">Dicetak: {{ date('d/m/Y H:i') }}</div>
     </div>
 

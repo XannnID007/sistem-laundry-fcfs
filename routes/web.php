@@ -52,6 +52,11 @@ Route::middleware(['auth', 'role:Hotel'])->prefix('hotel')->name('hotel.')->grou
     Route::get('/transactions/create', [HotelController::class, 'transactionCreate'])->name('transactions.create');
     Route::post('/transactions', [HotelController::class, 'transactionStore'])->name('transactions.store');
     Route::get('/transactions/{id}', [HotelController::class, 'transactionShow'])->name('transactions.show');
+
+    // Laporan Hotel (khusus transaksi hotel sendiri)
+    Route::get('/laporan', [HotelController::class, 'laporanIndex'])->name('laporan.index');
+    Route::post('/laporan/generate', [HotelController::class, 'laporanGenerate'])->name('laporan.generate');
+    Route::get('/laporan/pdf', [HotelController::class, 'laporanPdf'])->name('laporan.pdf');
 });
 
 // Laundry Routes
@@ -61,4 +66,9 @@ Route::middleware(['auth', 'role:Laundry'])->prefix('laundry')->name('laundry.')
     Route::get('/transactions', [LaundryController::class, 'allTransactions'])->name('transactions.index');
     Route::get('/transactions/{id}', [LaundryController::class, 'transactionShow'])->name('transactions.show');
     Route::put('/transactions/{id}/status', [LaundryController::class, 'updateStatus'])->name('transactions.updateStatus');
+
+    // Laporan Laundry (semua transaksi)
+    Route::get('/laporan', [LaundryController::class, 'laporanIndex'])->name('laporan.index');
+    Route::post('/laporan/generate', [LaundryController::class, 'laporanGenerate'])->name('laporan.generate');
+    Route::get('/laporan/pdf', [LaundryController::class, 'laporanPdf'])->name('laporan.pdf');
 });

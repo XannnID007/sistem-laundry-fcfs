@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaundryController extends Controller
 {
@@ -20,11 +21,9 @@ class LaundryController extends Controller
     // IMPLEMENTASI ALGORITMA FCFS
     public function queueIndex()
     {
-        // Query dengan FCFS: ORDER BY tgl_transaksi ASC
-        // Transaksi yang masuk lebih dulu akan ditampilkan di urutan teratas
         $transactions = Transaction::with(['user.hotel', 'details.linen'])
             ->whereIn('status', ['Pending', 'Dijemput', 'Proses'])
-            ->fcfsOrder() // Menggunakan scope FCFS dari model
+            ->fcfsOrder()
             ->get();
 
         return view('laundry.queue.index', compact('transactions'));
@@ -58,5 +57,53 @@ class LaundryController extends Controller
             ->get();
 
         return view('laundry.transactions.index', compact('transactions'));
+    }
+
+    // ─── Laporan Laundry (semua transaksi) ────────────────────────────────────
+
+    public function laporanIndex()
+    {
+        return view('laundry.laporan.index');
+    }
+
+    public function laporanGenerate(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $query = Transaction::with(['user.hotel', 'details.linen'])
+            ->whereDate('tgl_transaksi', '>=', $request->start_date)
+            ->whereDate('tgl_transaksi', '<=', $request->end_date)
+            ->fcfsOrder();
+
+        // Filter opsional berdasarkan status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $transactions = $query->get();
+
+        return view('laundry.laporan.result', compact('transactions', 'request'));
+    }
+
+    public function laporanPdf(Request $request)
+    {
+        $query = Transaction::with(['user.hotel', 'details.linen'])
+            ->whereDate('tgl_transaksi', '>=', $request->start_date)
+            ->whereDate('tgl_transaksi', '<=', $request->end_date)
+            ->fcfsOrder();
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $transactions = $query->get();
+
+        $pdf = Pdf::loadView('laundry.laporan.pdf', compact('transactions', 'request'));
+        $pdf->setPaper('A4', 'landscape');
+
+        return $pdf->download('laporan-laundry-operasional-' . date('Y-m-d') . '.pdf');
     }
 }

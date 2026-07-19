@@ -1,9 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Laporan Transaksi Laundry')
+@section('title', 'Laporan Transaksi — ' . $hotelName)
 
 @push('styles')
     <style>
+        /* ── Report header card ── */
         .report-info-card {
             background: #fff;
             border: 1px solid #e2e8f0;
@@ -28,6 +29,7 @@
             margin-top: 2px;
         }
 
+        /* ── Stat cards ── */
         .stat-row {
             display: flex;
             gap: 16px;
@@ -74,6 +76,7 @@
             margin-top: 3px;
         }
 
+        /* ── Main table card ── */
         .report-table-card {
             background: #fff;
             border: 1px solid #e2e8f0;
@@ -117,6 +120,7 @@
             border-bottom: none;
         }
 
+        /* ── Room chips ── */
         .room-chip {
             display: inline-flex;
             align-items: center;
@@ -131,6 +135,7 @@
             margin: 2px 2px 2px 0;
         }
 
+        /* ── Room detail expand ── */
         .room-detail-wrap {
             margin-top: 10px;
             border: 1px solid #e2e8f0;
@@ -175,6 +180,7 @@
             color: #334155;
         }
 
+        /* ── Toggle btn ── */
         .toggle-btn {
             background: #f1f5f9;
             border: 1px solid #e2e8f0;
@@ -196,6 +202,7 @@
             border-color: var(--primary-color);
         }
 
+        /* ── Grand total footer row ── */
         .tfoot-total td {
             background: #1e293b !important;
             color: #fff !important;
@@ -204,6 +211,7 @@
             padding: 13px 14px;
         }
 
+        /* ── Status badges ── */
         .s-pending {
             background: #fef3c7;
             color: #92400e;
@@ -242,6 +250,7 @@
             font-weight: 700;
         }
 
+        /* ── Empty state ── */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -269,31 +278,38 @@
 @section('content')
     <div class="page-inner">
 
+        {{-- ── Page Header ── --}}
         <div class="page-header">
             <h4 class="page-title fw-bold">Laporan Transaksi</h4>
             <ul class="breadcrumbs">
-                <li class="nav-home"><a href="{{ route('manajer.dashboard') }}"><i class="flaticon-home"></i></a></li>
+                <li class="nav-home"><a href="{{ route('hotel.dashboard') }}"><i class="flaticon-home"></i></a></li>
                 <li class="separator"><i class="flaticon-right-arrow"></i></li>
-                <li class="nav-item"><a href="{{ route('manajer.laporan.index') }}">Laporan</a></li>
+                <li class="nav-item"><a href="{{ route('hotel.laporan.index') }}">Laporan</a></li>
                 <li class="separator"><i class="flaticon-right-arrow"></i></li>
                 <li class="nav-item"><a href="#">Hasil</a></li>
             </ul>
         </div>
 
+        {{-- ── Action bar ── --}}
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap" style="gap:10px;">
-            <a href="{{ route('manajer.laporan.index') }}" class="btn btn-light btn-round border shadow-sm px-3">
+            <a href="{{ route('hotel.laporan.index') }}" class="btn btn-light btn-round border shadow-sm px-3">
                 <i class="fas fa-arrow-left mr-2"></i> Kembali
             </a>
             @if (!$transactions->isEmpty())
-                <a href="{{ route('manajer.laporan.pdf', ['start_date' => $request->start_date, 'end_date' => $request->end_date]) }}"
+                <a href="{{ route('hotel.laporan.pdf', ['start_date' => $request->start_date, 'end_date' => $request->end_date]) }}"
                     class="btn btn-dark btn-round shadow-sm px-4" target="_blank">
                     <i class="fas fa-file-pdf mr-2"></i> Unduh PDF
                 </a>
             @endif
         </div>
 
+        {{-- ── Report info card ── --}}
         <div class="report-info-card mb-4">
             <div class="row">
+                <div class="col-sm-4 mb-3 mb-sm-0">
+                    <div class="label">Hotel</div>
+                    <div class="value"><i class="fas fa-building mr-1 text-primary"></i> {{ $hotelName }}</div>
+                </div>
                 <div class="col-sm-4 mb-3 mb-sm-0">
                     <div class="label">Periode Laporan</div>
                     <div class="value">
@@ -301,10 +317,6 @@
                         &nbsp;—&nbsp;
                         {{ \Carbon\Carbon::parse($request->end_date)->isoFormat('D MMM YYYY') }}
                     </div>
-                </div>
-                <div class="col-sm-4 mb-3 mb-sm-0">
-                    <div class="label">Cakupan Laporan</div>
-                    <div class="value">Seluruh Hotel Mitra</div>
                 </div>
                 <div class="col-sm-4">
                     <div class="label">Metode Antrean</div>
@@ -319,8 +331,10 @@
                 <div class="empty-state">
                     <i class="fas fa-folder-open"></i>
                     <h5>Tidak Ada Transaksi</h5>
-                    <p>Tidak ada transaksi pada periode yang dipilih.</p>
-                    <a href="{{ route('manajer.laporan.index') }}" class="btn btn-primary btn-round mt-3 px-4">Pilih Periode
+                    <p>Tidak ada transaksi pada periode
+                        <strong>{{ \Carbon\Carbon::parse($request->start_date)->isoFormat('D MMM YYYY') }}</strong> s/d
+                        <strong>{{ \Carbon\Carbon::parse($request->end_date)->isoFormat('D MMM YYYY') }}</strong>.</p>
+                    <a href="{{ route('hotel.laporan.index') }}" class="btn btn-primary btn-round mt-3 px-4">Pilih Periode
                         Lain</a>
                 </div>
             </div>
@@ -329,23 +343,16 @@
                 $totalKamar = $transactions->sum(fn($t) => $t->details->pluck('no_room')->unique()->count());
                 $totalItem = $transactions->sum('total_qty');
                 $totalSelesai = $transactions->whereIn('status', ['Selesai', 'Diantar'])->count();
-                $totalHotel = $transactions->pluck('user.hotel.nama_hotel')->unique()->count();
+                $totalProses = $transactions->whereIn('status', ['Pending', 'Dijemput', 'Proses'])->count();
             @endphp
 
+            {{-- ── Stat row ── --}}
             <div class="stat-row">
                 <div class="stat-box">
                     <div class="icon-wrap" style="background:#ede9fe;"><i class="fas fa-receipt text-primary"></i></div>
                     <div>
                         <div class="stat-num">{{ $transactions->count() }}</div>
                         <div class="stat-lbl">Transaksi</div>
-                    </div>
-                </div>
-                <div class="stat-box">
-                    <div class="icon-wrap" style="background:#fce7f3;"><i class="fas fa-hotel" style="color:#9d174d;"></i>
-                    </div>
-                    <div>
-                        <div class="stat-num">{{ $totalHotel }}</div>
-                        <div class="stat-lbl">Hotel Aktif</div>
                     </div>
                 </div>
                 <div class="stat-box">
@@ -373,29 +380,38 @@
                         <div class="stat-lbl">Selesai</div>
                     </div>
                 </div>
+                <div class="stat-box">
+                    <div class="icon-wrap" style="background:#fee2e2;"><i class="fas fa-sync-alt"
+                            style="color:#dc2626;"></i></div>
+                    <div>
+                        <div class="stat-num">{{ $totalProses }}</div>
+                        <div class="stat-lbl">Dalam Proses</div>
+                    </div>
+                </div>
             </div>
 
+            {{-- ── Table ── --}}
             <div class="report-table-card">
                 <div class="card-top">
                     <div>
-                        <h5 class="mb-0 fw-bold text-dark" style="font-size:0.95rem;">Rincian Seluruh Transaksi</h5>
+                        <h5 class="mb-0 fw-bold text-dark" style="font-size:0.95rem;">Rincian Transaksi</h5>
                         <small class="text-muted">Diurutkan: waktu masuk (FCFS) · {{ $transactions->count() }} transaksi
                             ditemukan</small>
                     </div>
                     <span class="badge badge-primary px-3 py-2" style="border-radius:20px;">{{ $transactions->count() }}
                         data</span>
                 </div>
+
                 <div class="table-responsive">
                     <table class="table report-tbl mb-0">
                         <thead>
                             <tr>
                                 <th class="text-center" style="width:4%;">#</th>
                                 <th style="width:9%;">ID Order</th>
-                                <th style="width:16%;">Nama Hotel</th>
-                                <th style="width:13%;">Waktu Masuk</th>
+                                <th style="width:14%;">Waktu Masuk</th>
                                 <th class="text-center" style="width:7%;">Kamar</th>
-                                <th style="width:30%;">Rincian Linen per Kamar</th>
-                                <th class="text-center" style="width:9%;">Total Item</th>
+                                <th style="width:38%;">Rincian Linen per Kamar</th>
+                                <th class="text-center" style="width:10%;">Total Item</th>
                                 <th class="text-center" style="width:10%;">Status</th>
                             </tr>
                         </thead>
@@ -404,10 +420,10 @@
                                 @php $roomGroups = $trx->details->groupBy('no_room'); @endphp
                                 <tr>
                                     <td class="text-center text-muted">{{ $i + 1 }}</td>
-                                    <td><span class="font-weight-bold text-dark"
-                                            style="font-size:0.9rem;">#{{ $trx->transaction_id }}</span></td>
-                                    <td><span class="font-weight-bold text-dark"
-                                            style="font-size:0.85rem;">{{ $trx->user->hotel->nama_hotel }}</span></td>
+                                    <td>
+                                        <span class="font-weight-bold text-dark"
+                                            style="font-size:0.9rem;">#{{ $trx->transaction_id }}</span>
+                                    </td>
                                     <td>
                                         <span class="d-block font-weight-bold text-dark"
                                             style="font-size:0.85rem;">{{ $trx->tgl_transaksi->format('d/m/Y') }}</span>
@@ -420,6 +436,7 @@
                                             style="border-radius:20px; padding:5px 10px;">{{ $roomGroups->count() }}</span>
                                     </td>
                                     <td>
+                                        {{-- chips --}}
                                         <div class="mb-2">
                                             @foreach ($roomGroups as $noRoom => $details)
                                                 <span class="room-chip"><i class="fas fa-door-open"
@@ -427,10 +444,12 @@
                                                     <strong>{{ $details->sum('qty') }}</strong> item</span>
                                             @endforeach
                                         </div>
+                                        {{-- toggle --}}
                                         <button class="toggle-btn" data-toggle="collapse"
                                             data-target="#rd-{{ $trx->transaction_id }}">
                                             <i class="fas fa-chevron-down"></i> Lihat Detail Kamar
                                         </button>
+                                        {{-- collapse detail --}}
                                         <div class="collapse" id="rd-{{ $trx->transaction_id }}">
                                             @foreach ($roomGroups as $noRoom => $details)
                                                 <div class="room-detail-wrap mt-2">
@@ -491,7 +510,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="tfoot-total">
-                                <td colspan="4" class="text-right"><i class="fas fa-sigma mr-2"></i> Grand Total
+                                <td colspan="3" class="text-right"><i class="fas fa-sigma mr-2"></i> Grand Total
                                     Periode</td>
                                 <td class="text-center">{{ $totalKamar }} kamar</td>
                                 <td class="text-center">{{ $transactions->count() }} transaksi</td>
